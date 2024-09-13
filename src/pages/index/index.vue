@@ -2,7 +2,7 @@
   <view class="content">
     <navbar />
     <headWarn v-if="Logined" />
-    <image class="logo" src="/static/logo.png"></image>
+    <image class="logo" :src="fileUrl('static/logo.png')"></image>
     <text class="title">在这匹配最佳会面时间\n即使再忙也要拨冗莅临</text>
 
     <input v-if="!Logined" type="nickname" class="nicknameInput" placeholder="点击获取昵称" placeholder-class="nicknamePlaceholder" @blur="nickNameInput" @input="nickNameInput" />
@@ -51,6 +51,9 @@ export default {
     }
   },
   methods: {
+    fileUrl(v) {
+      return v.trim() ? `${process.env.VUE_APP_BASE_API_FILE}/${v}` : ''
+    },
     start() {
       uni.redirectTo({
         url: '/pages/create/create',
