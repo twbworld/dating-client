@@ -3,7 +3,7 @@
     <navbar />
     <view class="detail-box">
       <uni-card title="推荐会面时间">
-        <uni-transition mode-class="fade" :show="cardShow">
+        <uni-transition mode-class="fade" :show="resShow">
           <view class="result-date">{{ date }}</view>
           <view>{{ dateDetail }}</view>
         </uni-transition>
@@ -14,6 +14,7 @@
         <uni-col :span="17">
           <text class="wait-join" v-if="users.length < 2">等待朋友加入...</text>
           <text class="is-join" v-else>{{ users.length - 1 }}位朋友已加入</text>
+          <!-- <text class="is-join">{{ users.length - 1 }}个加入</text> -->
         </uni-col>
         <uni-col :span="7">
           <button class="share-btn" open-type="share" v-show="dateting.status == 1" type="primary" size="default">邀请 </button>
@@ -21,29 +22,38 @@
       </uni-row>
 
       <!-- 人员列表 -->
-      <uni-row v-for="item in users" :key="item.ut_id">
-        <uni-col :span="4">
-          <image :src="fileUrl(item.avatar_url)" mode="aspectFit" class="user-avatar"></image>
-        </uni-col>
-        <uni-col :span="getSpan(item)">
-          <uni-tag class="tag-name" v-for="index in item.info.ts" :key="index" :inverted="true" :text="index.replace(/^0+/, '')" type="primary" />
-        </uni-col>
-        <!-- 删除按钮(虚拟用户) -->
-        <uni-col v-if="showDeleteButton(item)" :span="3">
-          <uni-icons @click="del(item)" type="closeempty" size="30" style="float: right"></uni-icons>
-        </uni-col>
-        <!-- 编辑按钮 -->
-        <uni-col v-else-if="showEditButton(item)" :span="3">
-          <uni-icons @click="chooseDateOpen(item)" type="compose" size="30" style="float: right"></uni-icons>
-        </uni-col>
-      </uni-row>
+      <uni-transition :mode-class="['fade', 'slide-top']" :show="resShow">
+        <uni-row v-for="item in users" :key="item.ut_id">
+          <uni-col :span="4">
+            <view class="mask">
+              <image :src="fileUrl(item.avatar_url)" mode="aspectFill" class="user-avatar"></image>
+              <view class="nickname" v-if="item.id != user.id" :style="{color: item.id == baseUserId ? '#ddd' : '#fff'}">{{item.nick_name}}</view>
+            </view>
+          </uni-col>
+          <uni-col :span="getSpan(item)">
+            <text v-if="!item.info.length">( 无 )</text>
+            <uni-tag class="tag-name" v-for="index in item.info" :key="index.tag" :inverted="true" :text="index.tag.replace(/^0+/, '')" :type="tagColor(index.res)" />
+          </uni-col>
+          <!-- 删除按钮(虚拟用户) -->
+          <uni-col v-if="showDeleteButton(item)" :span="3">
+            <uni-icons @click="del(item)" type="closeempty" size="30" style="float: right"></uni-icons>
+          </uni-col>
+          <!-- 编辑按钮 -->
+          <uni-col v-else-if="showEditButton(item)" :span="3">
+            <uni-icons @click="chooseDateOpen(item)" type="compose" size="30" style="float: right"></uni-icons>
+          </uni-col>
+        </uni-row>
+      </uni-transition>
 
       <view v-if="dateting.status == 1 && user.id == dateting.create_user_id">
         <text @click="chooseDateOpen()" class="add-btn">+ 手动添加会面</text>
       </view>
 
       <!-- 右下角按钮 -->
-      <uni-icons v-show="dateting.status == 1" @click="quitPost" :type="getQuitButtonType()" :color="getQuitButtonColor()" size="65" class="quit-btn"></uni-icons>
+      <uni-transition mode-class="fade" :show="true">
+        <uni-icons v-show="dateting.status == 1" @click="quitPost" :type="this.user.id == this.dateting.create_user_id ? 'close' : 'upload'"
+          :color="this.user.id == this.dateting.create_user_id ? '#D84E43': '#FFBE00'" size="65" class="quit-btn"></uni-icons>
+      </uni-transition>
 
       <uni-popup ref="calendar" background-color="#fff" type="bottom" @maskClick="chooseDateClose">
         <chooseDate v-if="chooseDateShow" :btnText="getChooseDateButtonText()" :defaultSelected="updateInfo" @lastFunc="chooseDateFunc" />
@@ -60,9 +70,10 @@ export default {
   data() {
     return {
       dateting: {},
+      baseUserId: 1,
       user: { id: 0 },
       users: [],
-      cardShow: false,
+      resShow: false,
       date: '',
       dateDetail: '',
       updateInfo: null, //当前编辑的数据信息
@@ -99,7 +110,6 @@ export default {
         let user = db.get('user')
         that.user.id = user.id
         that.getData()
-        that.cardShow = true
       }
     })
   },
@@ -112,17 +122,25 @@ export default {
     }
     return {
       title: '加入队伍, 匹配会面时间',
-      path: `/pages/detail/detail?id=${this.dateting.id}`,
+      path: `/pages/create/create?id=${this.dateting.id}`,
     }
   },
   methods: {
     fileUrl(v) {
       return v.trim() ? `${process.env.VUE_APP_BASE_API_FILE}/${v}` : ''
     },
+    tagColor(i = 0) {
+      if (i == 2) {
+        return 'warning'
+      } else if (i == 1) {
+        return 'success'
+      }
+      return 'default'
+    },
     getData() {
       let that = this
-      if (!this.dateting.id) {
-        this.$utils.showToast('出错, 请重试 ![hpdoij]')
+      if (!that.dateting.id) {
+        that.$utils.showToast('出错, 请重试 ![hpdoij]')
         setTimeout(() => {
           uni.navigateTo({
             url: '/pages/user/user',
@@ -130,7 +148,8 @@ export default {
         }, 1500)
         return
       }
-      getDating({ id: this.dateting.id }).then((res) => {
+      that.resShow = false
+      getDating({ id: that.dateting.id }).then((res) => {
         if (!res.data?.data) {
           that.$utils.showToast('出错, 请重试 ![pdogop]')
           setTimeout(() => {
@@ -143,7 +162,7 @@ export default {
 
         const { users, dating } = res.data.data
         if (!users?.length) {
-          this.$utils.showToast('出错, 请重试 ![ghopdegk]')
+          that.$utils.showToast('出错, 请重试 ![ghopdegk]')
           setTimeout(() => {
             uni.navigateTo({
               url: '/pages/user/user',
@@ -151,8 +170,8 @@ export default {
           }, 1500)
           return
         }
-        if (!users.some((user) => user.id === this.user.id)) {
-          this.$utils.showToast('您已经退出')
+        if (!users.some((user) => user.id === that.user.id)) {
+          that.$utils.showToast('您可能已退出')
           setTimeout(() => {
             uni.navigateTo({
               url: '/pages/user/user',
@@ -160,15 +179,16 @@ export default {
           }, 1500)
           return
         }
-        this.users = users
-        this.dateting = dating
-        this.updateDateDetails()
-        if (this.dateting.status === 0) {
+        that.users = users
+        that.dateting = dating
+        that.updateDateDetails()
+        if (that.dateting.status === 0) {
           uni.showModal({
             content: '会面已结束',
             showCancel: false,
           })
         }
+        that.resShow = true
       })
     },
     updateDateDetails() {
@@ -218,6 +238,7 @@ export default {
         that.$refs.calendar.open()
       })
     },
+    //关闭弹出层回调
     chooseDateClose() {
       let that = this
       that.updateInfo = null
@@ -232,7 +253,7 @@ export default {
       //跳转"我们哪里见"小程序
       uni.navigateToMiniProgram({
         appId: 'wx1ec936cb4de4c53f',
-        path: '/',
+        path: '',
         success(res) {},
       })
     },
@@ -276,20 +297,12 @@ export default {
     showDeleteButton(item) {
       return (
         this.dateting.status === 1 &&
-        item.id === 1 &&
+        item.id == this.baseUserId &&
         this.user.id === this.dateting.create_user_id
       )
     },
     showEditButton(item) {
       return this.dateting.status === 1 && item.id === this.user.id
-    },
-    getQuitButtonType() {
-      return this.user.id === this.dateting.create_user_id ? 'close' : 'upload'
-    },
-    getQuitButtonColor() {
-      return this.user.id === this.dateting.create_user_id
-        ? '#D84E43'
-        : '#FFBE00'
     },
     getChooseDateButtonText() {
       return this.updateInfo ? '修改' : '加入'
@@ -354,11 +367,6 @@ page {
     float: right;
     font-weight: bold;
   }
-  .user-avatar {
-    width: 80rpx;
-    height: 80rpx;
-    border-radius: 40rpx;
-  }
   .quit-btn {
     position: fixed;
     right: 30rpx;
@@ -376,5 +384,29 @@ page {
 }
 .uni-row {
   margin: 20rpx 0;
+}
+.mask {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 15rpx;
+  overflow: hidden;
+  position: relative;
+  .user-avatar {
+    width: 100%;
+    height: 100%;
+  }
+  .nickname {
+    position: absolute;
+    bottom: 0;
+    width: 80rpx;
+    height: 40%;
+    background: rgba(0, 0, 0, 0.4);
+    text-align: center;
+    line-height: 30rpx;
+    font-size: small;
+    overflow: hidden;
+    letter-spacing: initial;
+    white-space: nowrap;
+  }
 }
 </style>

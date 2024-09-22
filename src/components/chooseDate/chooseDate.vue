@@ -89,9 +89,9 @@ export default {
       }-${myDate.getDate()}`
     },
     initializeDefaultSelected() {
-      if (this.defaultSelected?.info?.t?.length > 0) {
-        this.defaultSelected.info.t.forEach((timeRange) => {
-          const [date1, date2] = timeRange.map((time) => time.split(' '))
+      if (this.defaultSelected?.info?.length > 0) {
+        this.defaultSelected.info.forEach((timeRange) => {
+          const [date1, date2] = timeRange.t.map((time) => time.split(' '))
           if (!date1[0] || !date2[0]) return
 
           const index = this.getIndexByHour(date1[1], date2[1])

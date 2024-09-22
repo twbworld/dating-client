@@ -28,6 +28,26 @@ const getWxCode = () => handlePromise((resolve, reject) => {
   });
 });
 
+// 检查登录状态
+const checkLoginPage = (showModal = true) => handlePromise(async (resolve, reject) => {
+  let user = db.get('user');
+  if (user?.id > 0) {
+    resolve(true);
+    return;
+  }
+
+  await userLogin();
+  user = db.get('user');
+  if (user?.id > 0) {
+    resolve(true);
+    return;
+  }
+
+  await goRegister(showModal);
+  resolve(false);
+
+});
+
 // 用户登录
 const userLogin = () => handlePromise(async (resolve, reject) => {
   db.logOut();
@@ -43,43 +63,44 @@ const userLogin = () => handlePromise(async (resolve, reject) => {
     if (user?.id > 0) {
       db.set('user', user);
     } else {
-      // 新用户, 则下一步为获取用户信息, 最后后端获取session_key和openid进行注册
-      // checkLoginPage()
+      // 新用户, 则下一步为获取用户信息
     }
   } finally {
     resolve('');
   }
 });
 
-// 检查登录状态
-const checkLogin = () => handlePromise((resolve, reject) => {
-  uni.checkSession({
-    provider: 'weixin',
-    success: async () => {
-      const user = db.get('user');
-      if (!user?.id) {
-        await userLogin();
-      }
-      resolve('');
-    },
-    fail: async () => {
-      db.logOut();
-      await userLogin();
-      resolve('');
-    },
-  });
-});
+// 未登录处理
+const goRegister = (showModal = true) => handlePromise((resolve, reject) => {
+  // showToast('未登录');
+  const indexUrl = '/pages/user/register';
+  const pages = getCurrentPages();
+  const page = pages[pages.length - 1];
 
-// 检查登录页面
-const checkLoginPage = () => handlePromise((resolve, reject) => {
-  const user = db.get('user');
-  if (!user?.id) {
-    noLogin().then(() => {
-      resolve(false);
-    });
-    return;
+  if (indexUrl == '/' + page.route) {
+    //注册页不提示跳转
+    showModal = false
   }
-  resolve(true);
+
+  if (showModal) {
+    uni.showModal({
+      title: '登录提示',
+      content: '提供昵称/头像, 可体验完整功能 !',
+      success: function (res) {
+        if (res.confirm) {
+          db.set('redirect_url', page.$page.fullPath); // 保存当前地址, 届时登录后重定向
+          uni.navigateTo({ url: indexUrl });
+        } else if (res.cancel) {
+          showToast(`已取消登录`, 1000)
+        }
+        resolve('');
+      }
+    });
+    return
+  }
+
+  resolve('');
+
 });
 
 // 检查重定向
@@ -102,23 +123,6 @@ const checkRedirect = () => handlePromise((resolve, reject) => {
   resolve(false);
 });
 
-// 未登录处理
-const noLogin = () => handlePromise((resolve, reject) => {
-  showToast('未登录');
-  const indexUrl = '/pages/index/index';
-  const pages = getCurrentPages();
-  const page = pages[pages.length - 1];
-  if (indexUrl != '/' + page.route) {
-    setTimeout(() => {
-      db.set('redirect_url', page.$page.fullPath); // 保存当前地址, 届时登录后重定向
-      uni.navigateTo({
-        url: indexUrl
-      });
-    }, 1500);
-  }
-  resolve('');
-});
-
 // 返回上一页
 const goBack = () => {
   const pages = getCurrentPages();
@@ -136,8 +140,8 @@ const goBack = () => {
 export default {
   goBack,
   getWxCode,
-  checkLogin,
   checkLoginPage,
+  userLogin,
   checkRedirect,
   showToast,
 };

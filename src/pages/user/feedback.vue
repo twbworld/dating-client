@@ -3,14 +3,17 @@
     <navbar />
     <view class="feedback-box">
       <uni-card :is-shadow="true" is-full @click="copyLink" style="text-align: center">
-        <text>本项目完全开源 : {{ github }}</text>
+        <text>业余项目, 完全开源\n{{ github }}</text>
       </uni-card>
       <uni-forms ref="form" :rules="rules" :modelValue="feedbackData">
         <uni-forms-item name="desc">
-          <uni-easyinput type="textarea" v-model="feedbackData.desc" placeholder="畅所欲言, 请不要吝啬您的善意" />
+          <uni-easyinput type="textarea" v-model="feedbackData.desc" placeholder="畅所欲言..." />
         </uni-forms-item>
       </uni-forms>
-      <button type="primary" @click="confirm">反馈</button>
+
+      <uni-file-picker v-model="imageValue" :auto-upload="false" file-mediatype="image" file-extname="png,jpg,jpeg" limit="1" @select="imgSelect"></uni-file-picker>
+
+      <button type="primary" @click="confirm" :disabled="disBtn">反馈</button>
     </view>
   </view>
 </template>
@@ -20,7 +23,8 @@ import { feedback } from '@/common/api/api.js'
 export default {
   data() {
     return {
-      github: 'github.com/twbworld/dating',
+      github: 'https://github.com/twbworld/dating',
+      disBtn: false,
       feedbackData: {
         desc: '',
         imgs: [],
@@ -62,23 +66,27 @@ export default {
         },
       })
     },
+    imgSelect(res) {
+      if (!res.tempFilePaths.length) {
+        return
+      }
+      this.feedbackData.imgs = res.tempFilePaths
+    },
     confirm() {
       let that = this
-      that.$refs.form
-        .validate()
-        .then((formData) => {
-          feedback(formData).then((res) => {
-            if (!res.data || res.data.code !== 0) {
-              that.$utils.showToast(res.data?.msg || '提交失败')
-              return
-            }
-            that.$utils.showToast('已收到, 感谢您的支持')
-            setTimeout(() => {
-              that.$utils.goBack()
-            }, 1500)
-          })
-        })
-        .catch((err) => {})
+      that.$refs.form.validate().then(async (formData) => {
+        that.disBtn = true
+        const res = await feedback(formData, that.feedbackData.imgs[0]) //暂支持一张图片
+        that.disBtn = false
+        if (!res.data || res.data.code !== 0) {
+          that.$utils.showToast(res.data?.msg || '提交失败')
+          return
+        }
+        that.$utils.showToast('已收到, 感谢您的支持')
+        setTimeout(() => {
+          that.$utils.goBack()
+        }, 1500)
+      })
     },
   },
 }

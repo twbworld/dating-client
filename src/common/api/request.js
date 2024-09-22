@@ -2,14 +2,14 @@ import * as db from "@/common/db.js";
 import ut from "@/common/utils.js";
 import app from '@/main'
 
-var reRequest = 2 //重新请求次数
+var reRequest = 1 //重新请求次数
 
 export const request = (options) => {
 
   return new Promise((resolve, reject) => {
-    uni.showLoading({
-      title: "加载中...",
-    });
+    // uni.showLoading({
+    //   title: "加载中...",
+    // });
     uni.request({
       url: process.env.VUE_APP_BASE_API + options.url,
       method: options.method || "POST",
@@ -29,7 +29,7 @@ export const request = (options) => {
         resolve(err);
       },
       complete: () => {
-        uni.hideLoading();
+        // uni.hideLoading();
       },
     });
   });
@@ -38,14 +38,19 @@ export const request = (options) => {
 //上传文件
 export const upload = (options) => {
   return new Promise((resolve, reject) => {
-    uni.showLoading({
-      title: "加载中...",
-    });
+    // uni.showLoading({
+    //   title: "加载中...",
+    // });
+    if (!options.filePath) {
+      reject('空文件');
+      return
+    }
+
     uni.uploadFile({
       url: process.env.VUE_APP_BASE_API + options.url,
       filePath: options.filePath,
       name: 'file',
-      formData: options.data,
+      formData: options.data || {},
       header: {
         Authorization: db.get("token") || "",
       },
@@ -62,7 +67,7 @@ export const upload = (options) => {
         resolve(err);
       },
       complete: () => {
-        uni.hideLoading();
+        // uni.hideLoading();
       },
     });
   });
@@ -87,7 +92,7 @@ const showError = async (error, options) => {
       switch (error.data.code) {
         case 2: //token过期
           db.logOut()
-          await app.$utils.checkLogin().then(async () => {
+          await app.$utils.userLogin().then(async () => {
             if (reRequest > 0) {
               //重登
               reRequest -= 1
@@ -95,7 +100,7 @@ const showError = async (error, options) => {
                 //重新获取数据
                 if (code.data) {
                   error.data = code.data
-                  reRequest = 2;
+                  reRequest = 1;
                 }
               })
             }

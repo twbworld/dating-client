@@ -2,7 +2,7 @@
   <view class="create-box">
     <navbar />
     <headWarn v-if="headWarn" />
-    <chooseDate :btnText="typeText" @lastFunc="chooseDateFunc" />
+    <chooseDate :btnText="id ? '加入' :'发起'" @lastFunc="chooseDateFunc" />
   </view>
 </template>
 
@@ -13,7 +13,6 @@ export default {
   data() {
     return {
       id: 0,
-      typeText: '发起',
       headWarn: false,
     }
   },
@@ -46,18 +45,33 @@ export default {
   methods: {
     chooseDateFunc(dateInfo) {
       var that = this
-      join({ id: this.id * 1, info: dateInfo }).then((res) => {
-        if (!res.data || res.data.code !== 0) {
+      that.$utils.checkLoginPage().then((login) => {
+        if (!login) {
+          // setTimeout(() => {
+          //   uni.reLaunch({
+          //     url: `/pages/index/index`,
+          //   })
+          // }, 1000)
           return
         }
-        this.$utils.showToast(`成功${this.typeText}`, 1000)
-
-        setTimeout(() => {
+        join({ id: this.id * 1, info: dateInfo }).then((res) => {
+          if (!res.data || res.data.code !== 0) {
+            return
+          }
           const datingId = res.data.data?.id || this.id
-          uni.redirectTo({
+          uni.reLaunch({
             url: `/pages/detail/detail?id=${datingId}`,
           })
-        }, 1000)
+
+          // this.$utils.showToast("成功" + (that.id ? '加入' :'发起'), 1000)
+
+          // setTimeout(() => {
+          //   const datingId = res.data.data?.id || this.id
+          //   uni.reLaunch({
+          //     url: `/pages/detail/detail?id=${datingId}`,
+          //   })
+          // }, 1000)
+        })
       })
     },
     getDatingInfo() {
@@ -97,7 +111,6 @@ export default {
           })
           return
         }
-        this.typeText = '加入'
         this.headWarn = true
       })
     },

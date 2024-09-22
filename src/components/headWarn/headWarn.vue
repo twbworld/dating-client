@@ -1,9 +1,10 @@
 <template style="width:100%">
-  <view class="dating-box">
-    <view @click="datingClick" v-show="datingNum > 0" class="dating">你有{{ datingNum }}个进行中的会面
+  <uni-transition :mode-class="['fade', 'slide-top']" :show="datingNum > 0">
+    <view @click="datingClick" class="dating-box" v-show="datingNum > 0">
+      <text>你有{{ datingNum }}个进行中的会面</text>
       <uni-icons type="right" size="30" style="float: right" color="#F1F1F1"></uni-icons>
     </view>
-  </view>
+  </uni-transition>
 </template>
 
 <script>
@@ -48,17 +49,14 @@ export default {
 
 <style lang="scss" scoped>
 .dating-box {
+  width: 560rpx;
+  transition: height 1s;
+  max-height: 70rpx;
+  line-height: 70rpx;
   margin-top: 20rpx;
-  height: 70rpx;
-  width: 750rpx;
-  .dating {
-    padding: 0 30rpx 0 50rpx;
-    margin: 0 auto;
-    width: 75%;
-    border-radius: 35rpx;
-    background-color: #1aad19;
-    line-height: 70rpx;
-    color: #f1f1f1;
-  }
+  padding: 0 30rpx 0 50rpx;
+  border-radius: 35rpx;
+  background-color: #1aad19;
+  color: #f1f1f1;
 }
 </style>

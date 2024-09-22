@@ -5,11 +5,11 @@
       <view style="margin: 30rpx 0">
         <uni-row>
           <uni-col :span="4">
-            <image class="logo-img" mode="aspectFit" :src="fileUrl(user.avatar_url)"></image>
+            <image class="logo-img" mode="aspectFit" :src="fileUrl(user.avatar_url) || defaultAvatar"></image>
           </uni-col>
           <uni-col :span="20">
-            <text @click="logout" class="topRightText">退登</text>
-            <text @click="feedback" class="topRightText">反馈 |</text>
+            <!-- <text v-show="logoutShow" @click="logout" class="topRightText">退登</text> -->
+            <text @click="feedback" class="topRightText">反馈</text>
             <button class="share-btn topRightText" :plain="true" open-type="share">推荐给朋友 |</button>
           </uni-col>
         </uni-row>
@@ -19,30 +19,32 @@
       <view class="tip">你发起的和你参与的会面都在这里</view>
 
       <uni-swipe-action ref="datingSwipe">
-        <uni-swipe-action-item v-for="value in datings.data" :key="value.ut_id">
-          <view class="datingCart" @click="goDetail(value.id)">
-            <uni-row>
-              <uni-col :span="20">
-                <text class="cardDate">{{ value.date }}</text>
-              </uni-col>
-              <uni-col :span="4">
-                <text class="cardStatus" :style="{ color: value.status === 1 ? '#1aad19' : '#ffbe00' }">{{ value.status === 1 ? "进行中" : "已结束" }}</text>
-              </uni-col>
-            </uni-row>
-            <view class="time-show">{{ user.id == value.create_user_id ? "我在" : ""
+        <uni-transition :mode-class="['fade', 'slide-top']" :show="true">
+          <uni-swipe-action-item v-for="value in datings.data" :key="value.ut_id">
+            <view class="datingCart" @click="goDetail(value.id)">
+              <uni-row>
+                <uni-col :span="20">
+                  <text class="cardDate">{{ value.date }}</text>
+                </uni-col>
+                <uni-col :span="4">
+                  <text class="cardStatus" :style="{ color: value.status === 1 ? '#1aad19' : '#ffbe00' }">{{ value.status === 1 ? "进行中" : "已结束" }}</text>
+                </uni-col>
+              </uni-row>
+              <view class="time-show">{{ user.id == value.create_user_id ? "我在" : ""
               }}{{ value.time }}发起的会面</view>
-            <scroll-view scroll-x="true" class="friends" :scroll-with-animation="true" :scroll-anchoring="true">
-              <image v-for="(v, k) in value.avatar_url" :key="k" class="avatar" mode="aspectFit" :src="fileUrl(v)">
-              </image>
-            </scroll-view>
-          </view>
-          <template v-slot:right v-if="value.status === 1">
-            <button class="slot-button share-btn" :data-id="value.id" :style="{ backgroundColor: '#10AEFF', }" open-type="share" type="primary" size="default">邀请</button>
+              <scroll-view scroll-x="true" class="friends" :scroll-with-animation="true" :scroll-anchoring="true">
+                <image v-for="(v, k) in value.avatar_url" :key="k" class="avatar" mode="aspectFit" :src="fileUrl(v)">
+                </image>
+              </scroll-view>
+            </view>
+            <template v-slot:right v-if="value.status === 1">
+              <button class="slot-button share-btn" :data-id="value.id" :style="{ backgroundColor: '#10AEFF', }" open-type="share" type="primary" size="default">邀请</button>
 
-            <view v-if="user.id == value.create_user_id" @click="quitDating(value)" :style="{backgroundColor: '#F76260'}" class="slot-button">结束</view>
-            <view v-else @click="quitDating(value)" :style="{backgroundColor: '#ffbe00'}" class="slot-button">退出</view>
-          </template>
-        </uni-swipe-action-item>
+              <view v-if="user.id == value.create_user_id" @click="quitDating(value)" :style="{backgroundColor: '#F76260'}" class="slot-button">结束</view>
+              <view v-else @click="quitDating(value)" :style="{backgroundColor: '#ffbe00'}" class="slot-button">退出</view>
+            </template>
+          </uni-swipe-action-item>
+        </uni-transition>
       </uni-swipe-action>
 
       <view v-show="loading" class="loading-text">
@@ -70,6 +72,9 @@ export default {
       },
       noContent: false, //列表数据是否已全部加载
       loading: false,
+      logoutShow: false,
+      defaultAvatar:
+        'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9VemZoJ8rg/132',
     }
   },
   onLoad() {
@@ -85,6 +90,7 @@ export default {
     if (login) {
       this.user = db.get('user')
       this.getData(1, 0)
+      this.logoutShow = true
     }
   },
   //触底加载
@@ -95,7 +101,7 @@ export default {
     if (res.target?.dataset?.id) {
       return {
         title: '加入队伍, 匹配会面时间',
-        path: `/pages/detail/detail?id=${res.target.dataset.id}`,
+        path: `/pages/create/create?id=${res.target.dataset.id}`,
       }
     }
     return {

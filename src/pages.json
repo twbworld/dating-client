@@ -1,43 +1,48 @@
 {
-	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
-		{
-			"path": "pages/index/index",
-			"style": {
-			}
-		},
-		{
-			"path": "pages/detail/detail",
-			"style": {
+  "pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+    {
+      "path": "pages/index/index",
+      "style": {}
+    },
+    {
+      "path": "pages/detail/detail",
+      "style": {
         "navigationBarTitleText": "会面详情",
-				"enablePullDownRefresh": true
-			}
-		},
-		{
-			"path": "pages/create/create",
-			"style": {
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/create/create",
+      "style": {
         "navigationBarTitleText": "创建会面"
-			}
-		},
-		{
-			"path": "pages/user/user",
-			"style": {
+      }
+    },
+    {
+      "path": "pages/user/user",
+      "style": {
         "navigationBarTitleText": "我的",
-				"onReachBottomDistance": 120 //触底加载配置
-			}
-		},
-		{
-			"path": "pages/user/feedback",
-			"style": {
+        "onReachBottomDistance": 120 //触底加载配置
+      }
+    },
+    {
+      "path": "pages/user/feedback",
+      "style": {
         "navigationBarTitleText": "反馈"
-			}
-		}
-	],
-	"globalStyle": {
-		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "我们何时见",
-		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8",
-		"navigationStyle": "custom",
-		"enablePullDownRefresh": false //下拉刷新
-	}
+      }
+    },
+    {
+      "path": "pages/user/register",
+      "style": {
+        "navigationBarTitleText": "注册"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "我们何时见",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8",
+    "navigationStyle": "custom",
+    "enablePullDownRefresh": false //下拉刷新
+  }
 }

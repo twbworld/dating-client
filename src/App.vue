@@ -19,10 +19,9 @@ export default {
       }
     },
     handleAppShow() {
-      this.$utils.checkLogin().finally(() => {
         this.$utils.checkRedirect() // 判断跳转
         this.$isResolve() // 标记执行完毕
-      })
+
       // console.log('App Show')
     },
     checkUpdateVersion() {

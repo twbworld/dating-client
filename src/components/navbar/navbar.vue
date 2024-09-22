@@ -38,6 +38,8 @@ export default {
       case 'pages/user/feedback':
         this.home = true
         this.left = true
+      case 'pages/user/register':
+        this.home = true
         break
     }
 
