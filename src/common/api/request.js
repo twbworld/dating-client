@@ -1,5 +1,6 @@
 import * as db from "@/common/db.js";
 import ut from "@/common/utils.js";
+import ws from '@/common/api/websocket.js'
 import app from '@/main'
 
 var reRequest = 1 //重新请求次数
@@ -145,4 +146,67 @@ const showError = async (error, options) => {
       ut.showToast(error.errMsg, 2000)
       break;
   }
+};
+
+
+export const requestWs = (options) => {
+  return new Promise((resolve, reject) => {
+
+    let wsq = new ws(
+      process.env.VUE_APP_SOCKET_API + options.url,
+      30
+    )
+
+    //登录请求
+    wsq.getOnOpen(() => {
+      wsq.send(db.get("token") || "")
+    })
+
+    let isLogin = false
+
+    wsq.getMessage(async (res) => {
+      if (isLogin) {
+        //当前getMessage只负责登录
+        return
+      }
+
+      if (res.data == undefined || res.data == null) {
+        wsq.close()
+        ut.showToast("连接已断开, 请刷新", 1500)
+        return
+      }
+
+      const msg = JSON.parse(res.data)
+
+      if (msg.code == undefined || (msg.code == 1 &&
+        msg.msg != undefined &&
+        msg.msg.indexOf('nv2gnb8') > 0)) //排除ws心跳检测的干扰)
+      {
+        return
+      }
+      console.log("收到信息:", msg);
+
+      switch (msg.code) {
+        case 0:
+          isLogin = true
+          resolve(wsq)
+          break;
+        case 2:
+          db.logOut()
+          app.$utils.userLogin()
+          wsq.close()
+          ut.showToast("登录已过期, 请刷新", 1500)
+          isLogin = false
+          resolve(false)
+          return
+
+        default:
+          resolve(false)
+          break;
+      }
+
+      handleToken(msg.token);
+    })
+
+  });
 };

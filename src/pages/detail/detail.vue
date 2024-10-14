@@ -63,7 +63,13 @@
 </template>
 
 <script>
-import { getDating, quit, join, updateUserTime } from '@/common/api/api.js'
+import {
+  getDating,
+  getDatingWs,
+  quit,
+  join,
+  updateUserTime,
+} from '@/common/api/api.js'
 import * as db from '@/common/db.js'
 
 export default {
@@ -78,9 +84,9 @@ export default {
       dateDetail: '',
       updateInfo: null, //当前编辑的数据信息
       chooseDateShow: false,
+      wsSocket: null,
     }
   },
-  mounted() {},
   onLoad(options) {
     uni.showShareMenu({
       withShareTicket: true, // 展示默认分享按钮
@@ -89,10 +95,6 @@ export default {
     if (options.id) {
       this.dateting.id = Number(options.id)
     }
-  },
-  //下拉刷新
-  onPullDownRefresh() {
-    this.getData()
   },
   async onShow() {
     if (!this.dateting.id) {
@@ -104,14 +106,28 @@ export default {
 
     await this.$onLaunchOk //等待onLaunchOk信号, 才能往下执行
 
-    var that = this
+    let that = this
     that.$utils.checkLoginPage().then((login) => {
       if (login) {
         let user = db.get('user')
         that.user.id = user.id
-        that.getData()
+        //建立websocket连接
+        getDatingWs().then((ws) => {
+          if (ws == false) {
+            return
+          }
+          that.wsSocket = ws
+          that.getMsgWs() //监听信息
+          that.getData(true)
+        })
       }
     })
+  },
+  onHide() {
+    this.closeWs()
+  },
+  onUnload() {
+    this.closeWs()
   },
   onShareAppMessage() {
     if (!this.dateting.id) {
@@ -125,6 +141,10 @@ export default {
       path: `/pages/create/create?id=${this.dateting.id}`,
     }
   },
+  //下拉刷新
+  onPullDownRefresh() {
+    this.getData() //用http做沉余, 避免websocket失败的情况
+  },
   methods: {
     fileUrl(v) {
       return v.trim() ? `${process.env.VUE_APP_BASE_API_FILE}/${v}` : ''
@@ -137,7 +157,12 @@ export default {
       }
       return 'default'
     },
-    getData() {
+    //断开websocket
+    closeWs() {
+      this.wsSocket.close()
+      this.wsSocket = null
+    },
+    getData(ws = false) {
       let that = this
       if (!that.dateting.id) {
         that.$utils.showToast('出错, 请重试 ![hpdoij]')
@@ -149,47 +174,82 @@ export default {
         return
       }
       that.resShow = false
-      getDating({ id: that.dateting.id }).then((res) => {
-        if (!res.data?.data) {
-          that.$utils.showToast('出错, 请重试 ![pdogop]')
-          setTimeout(() => {
-            uni.navigateBack({
-              delta: 1,
-            })
-          }, 1500)
+      let data = { id: that.dateting.id }
+      if (ws) {
+        //websocket
+        that.wsSocket.send(JSON.stringify(data))
+      } else {
+        //http
+        getDating(data).then((res) => {
+          that.dataHandle(res)
+        })
+      }
+    },
+    //监听websocket消息
+    getMsgWs() {
+      let that = this
+      that.wsSocket.getMessage((res) => {
+        if (res.data == undefined || res.data == null) {
+          that.wsSocket.close()
+          that.$utils.showToast('连接已断开, 请刷新', 1500)
           return
         }
 
-        const { users, dating } = res.data.data
-        if (!users?.length) {
-          that.$utils.showToast('出错, 请重试 ![ghopdegk]')
-          setTimeout(() => {
-            uni.navigateTo({
-              url: '/pages/user/user',
-            })
-          }, 1500)
+        res.data = JSON.parse(res.data)
+        console.log('收到信息:', res.data)
+        if (
+          res.data.code == undefined ||
+          (res.data.code == 1 &&
+            res.data.msg != undefined &&
+            res.data.msg.indexOf('nv2gnb8') > 0) //排除ws心跳检测的干扰
+        ) {
           return
         }
-        if (!users.some((user) => user.id === that.user.id)) {
-          that.$utils.showToast('您可能已退出')
-          setTimeout(() => {
-            uni.navigateTo({
-              url: '/pages/user/user',
-            })
-          }, 1500)
-          return
-        }
-        that.users = users
-        that.dateting = dating
-        that.updateDateDetails()
-        if (that.dateting.status === 0) {
-          uni.showModal({
-            content: '会面已结束',
-            showCancel: false,
-          })
-        }
-        that.resShow = true
+
+        that.dataHandle(res)
       })
+    },
+    dataHandle(res) {
+      let that = this
+      if (!res.data?.data) {
+        that.$utils.showToast('出错, 请重试 ![pdogop]')
+        setTimeout(() => {
+          uni.navigateBack({
+            delta: 1,
+          })
+        }, 1500)
+        return
+      }
+
+      const { users, dating } = res.data.data
+      if (!users?.length) {
+        that.$utils.showToast('出错, 请重试 ![ghopdegk]')
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/user/user',
+          })
+        }, 1500)
+        return
+      }
+      if (!users.some((user) => user.id === that.user.id)) {
+        that.$utils.showToast('您可能已退出')
+        setTimeout(() => {
+          uni.navigateTo({
+            url: '/pages/user/user',
+          })
+        }, 1500)
+        return
+      }
+      that.users = users
+      that.dateting = dating
+      that.updateDateDetails()
+      if (that.dateting.status === 0) {
+        uni.showModal({
+          content: '会面已结束',
+          showCancel: false,
+        })
+      }
+      that.resShow = true
     },
     updateDateDetails() {
       const { result } = this.dateting
@@ -225,7 +285,7 @@ export default {
             }
 
             that.$utils.showToast('成功')
-            that.getData()
+            // that.getData()
           })
         },
       })
@@ -314,7 +374,7 @@ export default {
         : { id: this.dateting.id, info: dateInfo }
       action(params).then((res) => {
         if (!res.data?.data) return
-        this.getData()
+        // this.getData()
         this.chooseDateClose()
         this.$utils.showToast(
           this.updateInfo?.ut_id ? '成功修改' : '成功加入',

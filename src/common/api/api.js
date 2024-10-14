@@ -1,4 +1,4 @@
-import { request, upload } from "@/common/api/request.js";
+import { request, upload, requestWs } from "@/common/api/request.js";
 
 export async function login(data) {
   return request({
@@ -25,6 +25,12 @@ export async function getDating(data) {
   return request({
     url: "/getDating",
     data,
+  })
+}
+
+export async function getDatingWs() {
+  return requestWs({
+    url: "/getDatingWs",
   })
 }
 
