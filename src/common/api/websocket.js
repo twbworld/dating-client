@@ -1,36 +1,32 @@
 class websocketUtil {
   constructor(url, time) {
-    this.is_open_socket = false //避免重复连接
+
     this.url = url //地址
-    this.data = null
-    //心跳检测
-    this.timeout = time * 1000 //多少秒执行检测
-    this.heartbeatInterval = null //检测服务器端是否还活着
-    this.reconnectTimeOut = null //重连之后多久再次重连
+    this.timeout = time * 1000 //多少秒执行心跳检测
+
+    this.heartbeatInterval = null //心跳检测
+    this.is_open_socket = false //避免重复连接
 
     try {
-      this.connectSocketInit()
+      this.connect()
     } catch (e) {
-      console.log('catch');
-      this.is_open_socket = false
+      this.is_open_socket = true
       this.reconnect();
     }
   }
 
   // 进入这个页面的时候创建websocket连接【整个页面随时使用】
-  connectSocketInit() {
+  connect() {
+
     this.socketTask = uni.connectSocket({
       url: this.url,
-      success: () => {
-        console.log("正准备建立websocket中...");
-        // 返回实例
-        return this.socketTask
-      },
+      complete: () => { }
     });
+
     this.socketTask.onOpen((res) => {
       console.log("WebSocket连接正常！");
-      clearTimeout(this.reconnectTimeOut)
-      clearTimeout(this.heartbeatInterval)
+
+      clearInterval(this.heartbeatInterval)
       this.is_open_socket = true;
       this.start();
     })
@@ -42,14 +38,48 @@ class websocketUtil {
     // });
     // 这里仅是事件监听【如果socket关闭了会执行】
     this.socketTask.onClose(() => {
-      console.log("已经被关闭了")
-      this.is_open_socket = false;
+      console.log("连接断开")
       this.reconnect();
     })
+
     // 监听 WebSocket 错误事件
     this.socketTask.onError((res) => {
-      console.log('WebSocket 出错了')
-      console.log(res)
+      console.log('WebSocket 出错了:', res)
+    })
+  }
+
+  //重新连接
+  reconnect() {
+    //停止发送心跳
+    clearInterval(this.heartbeatInterval)
+    //如果不是人为关闭的话，进行重连
+    if (this.is_open_socket) {
+      setTimeout(() => {
+        this.connect();
+      }, 3000)
+    }
+  }
+
+  //开启心跳检测
+  start() {
+    this.heartbeatInterval = setInterval(() => {
+      this.send("");
+    }, this.timeout)
+  }
+
+  // 关闭 WebSocket 连接
+  close(reason = '关闭') {
+    const that = this
+    this.socketTask.close({
+      reason,
+      success() {
+        clearInterval(that.heartbeatInterval)
+        that.heartbeatInterval = null
+        that.is_open_socket = false
+      },
+      fail() {
+        console.log('关闭 WebSocket 失败')
+      }
     })
   }
 
@@ -70,24 +100,6 @@ class websocketUtil {
     })
   }
 
-  //开启心跳检测
-  start() {
-    this.heartbeatInterval = setTimeout(() => {
-      this.data = null
-      this.send("");
-    }, this.timeout)
-  }
-  //重新连接
-  reconnect() {
-    //停止发送心跳
-    clearInterval(this.heartbeatInterval)
-    //如果不是人为关闭的话，进行重连
-    if (!this.is_open_socket) {
-      this.reconnectTimeOut = setTimeout(() => {
-        this.connectSocketInit();
-      }, 3000)
-    }
-  }
   //外部获取消息
   getMessage(callback) {
     this.socketTask.onMessage((res) => {
@@ -98,26 +110,6 @@ class websocketUtil {
   getOnOpen(callback) {
     this.socketTask.onOpen((res) => {
       return callback(res)
-    })
-  }
-
-  // 关闭 WebSocket 连接
-  close(reason = '关闭') {
-    const _this = this
-    this.socketTask.close({
-      reason,
-      success() {
-        _this.is_open_socket = false
-        _this.data = null
-        _this.heartbeatInterval = null
-        _this.reconnectTimeOut = null
-
-        clearInterval(_this.heartbeatTimer)
-        console.log('关闭 WebSocket 成功')
-      },
-      fail() {
-        console.log('关闭 WebSocket 失败')
-      }
     })
   }
 

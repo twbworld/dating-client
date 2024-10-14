@@ -159,8 +159,10 @@ export default {
     },
     //断开websocket
     closeWs() {
-      this.wsSocket.close()
-      this.wsSocket = null
+      if (this.wsSocket != null) {
+        this.wsSocket.close()
+        this.wsSocket = null
+      }
     },
     getData(ws = false) {
       let that = this
@@ -175,7 +177,7 @@ export default {
       }
       that.resShow = false
       let data = { id: that.dateting.id }
-      if (ws) {
+      if (ws && that.wsSocket != null) {
         //websocket
         that.wsSocket.send(JSON.stringify(data))
       } else {
@@ -188,6 +190,9 @@ export default {
     //监听websocket消息
     getMsgWs() {
       let that = this
+      if (that.wsSocket == null) {
+        return false
+      }
       that.wsSocket.getMessage((res) => {
         if (res.data == undefined || res.data == null) {
           that.wsSocket.close()
