@@ -51,8 +51,8 @@
 
       <!-- 右下角按钮 -->
       <uni-transition mode-class="fade" :show="true">
-        <uni-icons v-show="dating.status == 1" @click="quitPost" :type="this.user.id == this.dating.create_user_id ? 'close' : 'upload'"
-          :color="this.user.id == this.dating.create_user_id ? '#D84E43': '#FFBE00'" size="65" class="quit-btn"></uni-icons>
+        <uni-icons v-show="dating.status == 1" @click="quitPost" :type="user.id == dating.create_user_id ? 'close' : 'upload'"
+          :color="user.id == dating.create_user_id ? '#D84E43': '#FFBE00'" size="65" class="quit-btn"></uni-icons>
       </uni-transition>
 
       <uni-popup ref="calendar" background-color="#fff" type="bottom" @maskClick="chooseDateClose">
