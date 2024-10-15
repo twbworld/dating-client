@@ -178,8 +178,8 @@ export default {
         return
       }
 
-      this.disableRequestBtn = false
       this.$emit('lastFunc', info)
+      this.disableRequestBtn = false
     },
     getTimeByIndex(e) {
       if (

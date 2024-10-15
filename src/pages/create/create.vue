@@ -62,15 +62,6 @@ export default {
           uni.reLaunch({
             url: `/pages/detail/detail?id=${datingId}`,
           })
-
-          // this.$utils.showToast("成功" + (that.id ? '加入' :'发起'), 1000)
-
-          // setTimeout(() => {
-          //   const datingId = res.data.data?.id || this.id
-          //   uni.reLaunch({
-          //     url: `/pages/detail/detail?id=${datingId}`,
-          //   })
-          // }, 1000)
         })
       })
     },
@@ -78,14 +69,18 @@ export default {
       if (this.id < 1) {
         return
       }
+      uni.showLoading({
+        title: '加载中...',
+      })
+
       var that = this
       getDating({ id: this.id }).then((res) => {
+        uni.hideLoading()
+
         if (
           !res.data ||
           res.data.code != 0 ||
           !res.data.data.dating ||
-          !res.data.data.users ||
-          res.data.data.users.length < 1 ||
           res.data.data.dating.status == undefined
         ) {
           that.$utils.showToast('出错, 请重试 !')
@@ -94,6 +89,14 @@ export default {
               url: '/pages/index/index',
             })
           }, 1500)
+          return
+        }
+
+        const userId = db.get('user').id
+        if (res.data.data.users.some((user) => user.id === userId)) {
+          uni.redirectTo({
+            url: `/pages/detail/detail?id=${this.id}`,
+          })
           return
         }
         if (res.data.data.dating.status !== 1) {
@@ -105,17 +108,8 @@ export default {
           }, 1500)
           return
         }
-        if (this.isUserJoined(res.data.data.users)) {
-          uni.redirectTo({
-            url: `/pages/detail/detail?id=${this.id}`,
-          })
-          return
-        }
         this.headWarn = true
       })
-    },
-    isUserJoined(users) {
-      return users.some((user) => user.id === db.get('user').id)
     },
   },
 }

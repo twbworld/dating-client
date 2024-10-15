@@ -17,7 +17,7 @@
           <!-- <text class="is-join">{{ users.length - 1 }}个加入</text> -->
         </uni-col>
         <uni-col :span="7">
-          <button class="share-btn" open-type="share" v-show="dateting.status == 1" type="primary" size="default">邀请 </button>
+          <button class="share-btn" open-type="share" v-show="dating.status == 1" type="primary" size="default">邀请 </button>
         </uni-col>
       </uni-row>
 
@@ -45,14 +45,14 @@
         </uni-row>
       </uni-transition>
 
-      <view v-if="dateting.status == 1 && user.id == dateting.create_user_id">
+      <view v-if="dating.status == 1 && user.id == dating.create_user_id">
         <text @click="chooseDateOpen()" class="add-btn">+ 手动添加会面</text>
       </view>
 
       <!-- 右下角按钮 -->
       <uni-transition mode-class="fade" :show="true">
-        <uni-icons v-show="dateting.status == 1" @click="quitPost" :type="this.user.id == this.dateting.create_user_id ? 'close' : 'upload'"
-          :color="this.user.id == this.dateting.create_user_id ? '#D84E43': '#FFBE00'" size="65" class="quit-btn"></uni-icons>
+        <uni-icons v-show="dating.status == 1" @click="quitPost" :type="this.user.id == this.dating.create_user_id ? 'close' : 'upload'"
+          :color="this.user.id == this.dating.create_user_id ? '#D84E43': '#FFBE00'" size="65" class="quit-btn"></uni-icons>
       </uni-transition>
 
       <uni-popup ref="calendar" background-color="#fff" type="bottom" @maskClick="chooseDateClose">
@@ -75,7 +75,7 @@ import * as db from '@/common/db.js'
 export default {
   data() {
     return {
-      dateting: {},
+      dating: {},
       baseUserId: 1,
       user: { id: 0 },
       users: [],
@@ -93,11 +93,11 @@ export default {
       menus: ['shareAppMessage', 'shareTimeline'], //分享好友 | 分享朋友圈
     })
     if (options.id) {
-      this.dateting.id = Number(options.id)
+      this.dating.id = Number(options.id)
     }
   },
   async onShow() {
-    if (!this.dateting.id) {
+    if (!this.dating.id) {
       uni.redirectTo({
         url: '/pages/user/user',
       })
@@ -130,7 +130,7 @@ export default {
     this.closeWs()
   },
   onShareAppMessage() {
-    if (!this.dateting.id) {
+    if (!this.dating.id) {
       return {
         title: '与我匹配会面时间',
         path: '/',
@@ -138,7 +138,7 @@ export default {
     }
     return {
       title: '加入队伍, 匹配会面时间',
-      path: `/pages/create/create?id=${this.dateting.id}`,
+      path: `/pages/create/create?id=${this.dating.id}`,
     }
   },
   //下拉刷新
@@ -166,7 +166,7 @@ export default {
     },
     getData(ws = false) {
       let that = this
-      if (!that.dateting.id) {
+      if (!that.dating.id) {
         that.$utils.showToast('出错, 请重试 ![hpdoij]')
         setTimeout(() => {
           uni.navigateTo({
@@ -176,7 +176,7 @@ export default {
         return
       }
       that.resShow = false
-      let data = { id: that.dateting.id }
+      let data = { id: that.dating.id }
       if (ws && that.wsSocket != null) {
         //websocket
         that.wsSocket.send(JSON.stringify(data))
@@ -227,15 +227,6 @@ export default {
       }
 
       const { users, dating } = res.data.data
-      if (!users?.length) {
-        that.$utils.showToast('出错, 请重试 ![ghopdegk]')
-        setTimeout(() => {
-          uni.navigateTo({
-            url: '/pages/user/user',
-          })
-        }, 1500)
-        return
-      }
       if (!users.some((user) => user.id === that.user.id)) {
         that.$utils.showToast('您可能已退出')
         setTimeout(() => {
@@ -246,9 +237,9 @@ export default {
         return
       }
       that.users = users
-      that.dateting = dating
+      that.dating = dating
       that.updateDateDetails()
-      if (that.dateting.status === 0) {
+      if (that.dating.status === 0) {
         uni.showModal({
           content: '会面已结束',
           showCancel: false,
@@ -257,7 +248,7 @@ export default {
       that.resShow = true
     },
     updateDateDetails() {
-      const { result } = this.dateting
+      const { result } = this.dating
       if (result?.d?.length) {
         this.date = result.d.join(' | ')
         this.dateDetail = result.r
@@ -324,7 +315,7 @@ export default {
     },
     quitPost() {
       //结束/退出
-      const isCreator = this.dateting.create_user_id === this.user.id
+      const isCreator = this.dating.create_user_id === this.user.id
       const content = isCreator
         ? '结束后, 未加入的好友将不能进入, 确定要结束本次会面吗 ?'
         : '退出后后, 将清除您的会面信息, 通过邀请卡片可再次加入'
@@ -339,7 +330,7 @@ export default {
           if (res.cancel) {
             return
           }
-          quit({ id: that.dateting.id }).then((res) => {
+          quit({ id: that.dating.id }).then((res) => {
             if (!res.data?.data?.id) {
               that.$utils.showToast('出错, 请重试 ![hgpod]')
               return
@@ -361,13 +352,13 @@ export default {
     },
     showDeleteButton(item) {
       return (
-        this.dateting.status === 1 &&
+        this.dating.status === 1 &&
         item.id == this.baseUserId &&
-        this.user.id === this.dateting.create_user_id
+        this.user.id === this.dating.create_user_id
       )
     },
     showEditButton(item) {
-      return this.dateting.status === 1 && item.id === this.user.id
+      return this.dating.status === 1 && item.id === this.user.id
     },
     getChooseDateButtonText() {
       return this.updateInfo ? '修改' : '加入'
@@ -376,7 +367,7 @@ export default {
       const action = this.updateInfo?.ut_id ? updateUserTime : join
       const params = this.updateInfo?.ut_id
         ? { ut_id: this.updateInfo.ut_id, info: dateInfo }
-        : { id: this.dateting.id, info: dateInfo }
+        : { id: this.dating.id, info: dateInfo }
       action(params).then((res) => {
         if (!res.data?.data) return
         // this.getData()
