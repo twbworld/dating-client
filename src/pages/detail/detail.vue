@@ -24,7 +24,7 @@
       <!-- 人员列表 -->
       <uni-transition :mode-class="['fade', 'slide-top']" :show="resShow">
         <uni-row v-for="item in users" :key="item.ut_id">
-          <uni-col :span="4">
+          <uni-col :span="3">
             <view class="mask">
               <image :src="fileUrl(item.avatar_url)" mode="aspectFill" class="user-avatar"></image>
               <view class="nickname" v-if="item.id != user.id" :style="{color: item.id == baseUserId ? '#ddd' : '#fff'}">{{item.nick_name}}</view>
@@ -348,7 +348,7 @@ export default {
       })
     },
     getSpan(item) {
-      return this.showDeleteButton(item) || this.showEditButton(item) ? 17 : 20
+      return this.showDeleteButton(item) || this.showEditButton(item) ? 18 : 21
     },
     showDeleteButton(item) {
       return (

@@ -125,7 +125,10 @@ const showError = async (error, options) => {
       ut.showToast('网络超时', 2000)
       break;
     case 502:
-      ut.showToast('服务器异常', 2000)
+      ut.showToast('错误,请重试', 2000)
+      break;
+    case 503:
+      ut.showToast('错误,请重试', 2000)
       break;
     case 401:
       ut.showToast('未授权，请重新登录', 1500)
