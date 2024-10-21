@@ -2,7 +2,7 @@
   <view>
     <navbar />
     <view class="detail-box">
-      <uni-card title="推荐会面时间">
+      <uni-card title="推荐时间">
         <uni-transition mode-class="fade" :show="resShow">
           <view class="result-date">{{ date }}</view>
           <view>{{ dateDetail }}</view>
@@ -13,11 +13,11 @@
       <uni-row>
         <uni-col :span="17">
           <text class="wait-join" v-if="users.length < 2">等待朋友加入...</text>
-          <text class="is-join" v-else>{{ users.length - 1 }}位朋友已加入</text>
+          <text class="is-join" v-else>{{ users.length - 1 }}位已加入</text>
           <!-- <text class="is-join">{{ users.length - 1 }}个加入</text> -->
         </uni-col>
         <uni-col :span="7">
-          <button class="share-btn" open-type="share" v-show="dating.status == 1" type="primary" size="default">邀请 </button>
+          <button class="share-btn" open-type="share" v-show="dating.status == 1" type="primary" size="default">邀请</button>
         </uni-col>
       </uni-row>
 
@@ -46,7 +46,7 @@
       </uni-transition>
 
       <view v-if="dating.status == 1 && user.id == dating.create_user_id">
-        <text @click="chooseDateOpen()" class="add-btn">+ 手动添加会面</text>
+        <text @click="chooseDateOpen()" class="add-btn">+ 手动添加</text>
       </view>
 
       <!-- 右下角按钮 -->
@@ -252,11 +252,11 @@ export default {
       if (result?.d?.length) {
         this.date = result.d.join(' | ')
         this.dateDetail = result.r
-          ? '玩的开心哟 !'
-          : '有小伙伴因没有共同时间而无法匹配时，不妨重新规划'
+          ? '留意出行当天的天气哦'
+          : '有人不存在共同的时间, 不妨重新规划'
       } else {
         this.date = '遗憾, 匹配失败'
-        this.dateDetail = '并没共同的空闲时间, 建议重新规划哟'
+        this.dateDetail = '不存在共同的时间, 请重新规划'
       }
     },
     del(v) {
@@ -317,9 +317,9 @@ export default {
       //结束/退出
       const isCreator = this.dating.create_user_id === this.user.id
       const content = isCreator
-        ? '结束后, 未加入的好友将不能进入, 确定要结束本次会面吗 ?'
-        : '退出后后, 将清除您的会面信息, 通过邀请卡片可再次加入'
-      const confirmText = isCreator ? '结束会面' : '退出会面'
+        ? '关闭后就无法重新开启, 确定要关闭吗 ?'
+        : '退出后, 通过邀请卡片可再次加入'
+      const confirmText = isCreator ? '结束' : '退出'
 
       let that = this
       uni.showModal({
@@ -364,16 +364,17 @@ export default {
       return this.updateInfo ? '修改' : '加入'
     },
     chooseDateFunc(dateInfo) {
-      const action = this.updateInfo?.ut_id ? updateUserTime : join
-      const params = this.updateInfo?.ut_id
-        ? { ut_id: this.updateInfo.ut_id, info: dateInfo }
-        : { id: this.dating.id, info: dateInfo }
+	  let that = this
+      const action = that.updateInfo?.ut_id ? updateUserTime : join
+      const params = that.updateInfo?.ut_id
+        ? { ut_id: that.updateInfo.ut_id, info: dateInfo }
+        : { id: that.dating.id, info: dateInfo }
       action(params).then((res) => {
         if (!res.data?.data) return
         // this.getData()
-        this.chooseDateClose()
-        this.$utils.showToast(
-          this.updateInfo?.ut_id ? '成功修改' : '成功加入',
+        that.chooseDateClose()
+        that.$utils.showToast(
+		  '成功' + that.getChooseDateButtonText(),
           1000
         )
       })

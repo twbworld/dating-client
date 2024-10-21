@@ -3,7 +3,7 @@
     <navbar />
     <headWarn v-if="Logined" />
     <image class="logo" :src="fileUrl('static/logo.png')"></image>
-    <text class="title">来匹配共同时间\n再忙也得聚聚哇</text>
+    <text class="title">来匹配共同时间\n有空就得聚一聚</text>
 
     <uni-transition :show="true" mode-class="fade" class="startBtn-box">
       <button @click="start" class="startBtn" type="primary">开始</button>

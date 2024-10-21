@@ -10,13 +10,11 @@
           <uni-col :span="20">
             <!-- <text v-show="logoutShow" @click="logout" class="topRightText">退登</text> -->
             <text @click="feedback" class="topRightText">反馈</text>
-            <button class="share-btn topRightText" :plain="true" open-type="share">推荐给朋友 |</button>
+            <button class="share-btn topRightText" :plain="true" open-type="share">分享 |</button>
           </uni-col>
         </uni-row>
       </view>
       <text style="font-size: 40rpx">{{ user.nick_name }}</text>
-
-      <view class="tip">你发起的和你参与的会面都在这里</view>
 
       <uni-swipe-action ref="datingSwipe">
         <uni-transition :mode-class="['fade', 'slide-top']" :show="true">
@@ -31,7 +29,7 @@
                 </uni-col>
               </uni-row>
               <view class="time-show">{{ user.id == value.create_user_id ? "我在" : ""
-              }}{{ value.time }}发起的会面</view>
+              }}{{ value.time }}发起</view>
               <scroll-view scroll-x="true" class="friends" :scroll-with-animation="true" :scroll-anchoring="true">
                 <image v-for="(v, k) in value.avatar_url" :key="k" class="avatar" mode="aspectFit" :src="fileUrl(v)">
                 </image>
@@ -114,15 +112,16 @@ export default {
       return v ? `${process.env.VUE_APP_BASE_API_FILE}/${v.trim()}` : ''
     },
     getData(page, lastId) {
-      if (page < 1 || lastId < 0 || this.noContent) {
+	  let that = this
+      if (page < 1 || lastId < 0 || that.noContent) {
         return false
       }
       if (page == 1) {
-        this.datings.data = []
+        that.datings.data = []
       }
 
-      this.loading = true
-      this.noContent = false
+      that.loading = true
+      that.noContent = false
 
       getDatingList({ page, last_id: lastId }).then((res) => {
         if (
@@ -142,12 +141,12 @@ export default {
           return e
         })
 
-        this.loading = list.length === 0
-        this.noContent = list.length === 0
+        that.loading = list.length === 0
+        that.noContent = list.length === 0
 
-        this.datings.data.push(...list)
-        this.datings.page = page
-        this.datings.lastId = lastId
+        that.datings.data.push(...list)
+        that.datings.page = page
+        that.datings.lastId = lastId
       })
     },
     logout() {
@@ -173,9 +172,9 @@ export default {
       //结束/退出
       const isCreator = v.create_user_id === this.user.id
       const content = isCreator
-        ? '结束后, 未加入的好友将不能进入, 确定要结束本次会面吗 ?'
-        : '退出后后, 将清除您的会面信息, 通过邀请卡片可再次加入'
-      const confirmText = isCreator ? '结束会面' : '退出会面'
+        ? '关闭后就无法重新开启, 确定要关闭吗 ?'
+        : '退出后, 通过邀请卡片可再次加入'
+      const confirmText = isCreator ? '结束' : '退出'
 
       let that = this
       uni.showModal({

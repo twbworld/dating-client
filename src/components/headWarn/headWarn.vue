@@ -1,7 +1,7 @@
 <template style="width:100%">
   <uni-transition :mode-class="['fade', 'slide-top']" :show="datingNum > 0">
     <view @click="datingClick" class="dating-box" v-show="datingNum > 0">
-      <text>你有{{ datingNum }}个进行中的会面</text>
+      <text>{{ datingNum }}个进行中</text>
       <uni-icons type="right" size="30" style="float: right" color="#F1F1F1"></uni-icons>
     </view>
   </uni-transition>

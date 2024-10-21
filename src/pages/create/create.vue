@@ -100,7 +100,7 @@ export default {
           return
         }
         if (res.data.data.dating.status !== 1) {
-          that.$utils.showToast('会面已结束')
+          that.$utils.showToast('已结束')
           setTimeout(() => {
             uni.redirectTo({
               url: '/pages/index/index',
